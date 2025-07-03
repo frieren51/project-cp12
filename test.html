@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Folder Click</title>
+</head>
+<body>
+  <button onclick="loadFolder('2024-25')">Click to Load 2024–25</button>
+  <ul id="fileList"></ul>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js'
+
+    const supabase = createClient(
+      'https://dwejuascmbamgepfxntc.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (your anon key)'
+    );
+
+    async function loadFolder(folderName) {
+      const { data, error } = await supabase
+        .storage
+        .from('exam-papers')
+        .list(folderName);
+
+      const list = document.getElementById('fileList');
+      list.innerHTML = '';
+
+      if (error || !data) {
+        list.innerHTML = `<li>Error loading: ${error.message}</li>`;
+        return;
+      }
+
+      for (const file of data) {
+        const { data: urlData } = supabase
+          .storage
+          .from('exam-papers')
+          .getPublicUrl(`${folderName}/${file.name}`);
+
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="${urlData.publicUrl}" target="_blank">${file.name}</a>`;
+        list.appendChild(li);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>2024 Papers</title>
+</head>
+<body>
+
+  <h1>📄 Upload 2024 Papers</h1>
+  <input type="file" id="fileInput" />
+  <button id="uploadBtn">Upload</button>
+
+  <ul id="fileList"></ul>
+
+  <!-- ✅ INSERT SCRIPT HERE -->
+  <script type="module">
+    import { supabase } from './supabaseClient.js';
+
+    const BUCKET = 'pyq-papers';
+    const FOLDER = '2024';
+
+    const input = document.getElementById('fileInput');
+    const button = document.getElementById('uploadBtn');
+    const list = document.getElementById('fileList');
+
+    button.onclick = async () => {
+      const file = input.files[0];
+      if (!file) return alert("Select a file first");
+
+      const { error } = await supabase.storage.from(BUCKET).upload(`${FOLDER}/${file.name}`, file);
+      if (error) return alert("Upload failed: " + error.message);
+
+      alert("Uploaded!");
+      loadFiles();
+    };
+
+    async function loadFiles() {
+      const { data, error } = await supabase.storage.from(BUCKET).list(FOLDER);
+      list.innerHTML = '';
+      if (data) {
+        data.forEach(file => {
+          const li = document.createElement('li');
+          li.innerHTML = `<a href="${supabase.storage.from(BUCKET).getPublicUrl(FOLDER + '/' + file.name).data.publicUrl}" target="_blank">${file.name}</a>`;
+          list.appendChild(li);
+        });
+      }
+    }
+
+    loadFiles();
+  </script>
+
+</body>
+</html>

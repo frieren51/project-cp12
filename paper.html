@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Old Exam Papers</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef4fb;
+      padding: 2rem;
+      margin: 0;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2575fc;
+      margin-bottom: 2rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 2rem;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    .card {
+      background: white;
+      padding: 1.5rem;
+      text-align: center;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      background-color: #f0f8ff;
+    }
+
+    .card h2 {
+      font-size: 1.3rem;
+      color: #2575fc;
+    }
+
+    #fileSection {
+      max-width: 800px;
+      margin: 3rem auto;
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    #fileSection h3 {
+      color: #1f5ee0;
+      margin-bottom: 1rem;
+    }
+
+    #fileList li {
+      margin-bottom: 10px;
+    }
+
+    #fileList a {
+      color: #2575fc;
+      text-decoration: none;
+    }
+
+    #fileList a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+<h1>📂 Select Year to View Old Papers</h1>
+
+<div class="grid">
+  <div class="card" onclick="loadFolder('2024-25')">
+    <h2>📁 2024–25</h2>
+  </div>
+  <div class="card" onclick="loadFolder('2023-24')">
+    <h2>📁 2023–24</h2>
+  </div>
+  <div class="card" onclick="loadFolder('2022-23')">
+    <h2>📁 2022–23</h2>
+  </div>
+</div>
+
+<div id="fileSection" style="display:none;">
+  <h3 id="currentFolderTitle"></h3>
+  <ul id="fileList"></ul>
+</div>
+
+<script type="module">
+  import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js'
+
+  const supabase = createClient(
+    'https://dwejuascmbamgepfxntc.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3ZWp1YXNjbWJhbWdlcGZ4bnRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEwNTU2NTMsImV4cCI6MjA2NjYzMTY1M30.9eGMv41370ZkhNZusNePjNYaURo3X4HX5X80Q1g0L0I'
+  );
+
+  async function loadFolder(folderName) {
+    const { data, error } = await supabase
+      .storage
+      .from('exam-papers')
+      .list(folderName);
+
+    const fileSection = document.getElementById('fileSection');
+    const fileList = document.getElementById('fileList');
+    const title = document.getElementById('currentFolderTitle');
+
+    fileList.innerHTML = '';
+    title.textContent = `📄 Files in ${folderName}`;
+    fileSection.style.display = 'block';
+
+    if (error || !data || data.length === 0) {
+      fileList.innerHTML = '<li>No files found or error loading.</li>';
+      return;
+    }
+
+    data.forEach(file => {
+      const { data: publicUrlData } = supabase
+        .storage
+        .from('exam-papers')
+        .getPublicUrl(`${folderName}/${file.name}`);
+
+      const li = document.createElement('li');
+      li.innerHTML = `<a href="${publicUrlData.publicUrl}" target="_blank">${file.name}</a>`;
+      fileList.appendChild(li);
+    });
+  }
+</script>
+
+</body>
+</html>
